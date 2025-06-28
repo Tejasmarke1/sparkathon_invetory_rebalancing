@@ -1,0 +1,74 @@
+[
+  {
+    "from":"Lucknow",
+    "to":"Delhi",
+    "sku":"Biscuits",
+    "quantity":78,
+    "cost":377,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Nagpur",
+    "to":"Pune",
+    "sku":"Biscuits",
+    "quantity":68,
+    "cost":86,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Nagpur",
+    "to":"Chennai",
+    "sku":"Chips",
+    "quantity":277,
+    "cost":361,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Pune",
+    "to":"Lucknow",
+    "sku":"Chips",
+    "quantity":189,
+    "cost":175,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Lucknow",
+    "to":"Chennai",
+    "sku":"Juice",
+    "quantity":126,
+    "cost":162,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Pune",
+    "to":"Nagpur",
+    "sku":"Milk",
+    "quantity":169,
+    "cost":323,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Lucknow",
+    "to":"Delhi",
+    "sku":"Oil",
+    "quantity":139,
+    "cost":377,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Chennai",
+    "to":"Delhi",
+    "sku":"Rice",
+    "quantity":246,
+    "cost":133,
+    "reason":"Overstock-Understock Gap"
+  },
+  {
+    "from":"Chennai",
+    "to":"Delhi",
+    "sku":"Toothpaste",
+    "quantity":202,
+    "cost":133,
+    "reason":"Overstock-Understock Gap"
+  }
+]

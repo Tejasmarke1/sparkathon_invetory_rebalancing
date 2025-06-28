@@ -1,0 +1,7 @@
+from,to,sku,quantity,cost,reason
+Lucknow,Chennai,Biscuits,130,162,Overstock-Understock Gap
+Nagpur,Chennai,Chips,145,361,Overstock-Understock Gap
+Pune,Lucknow,Chips,346,175,Overstock-Understock Gap
+Nagpur,Chennai,Juice,97,361,Overstock-Understock Gap
+Chennai,Pune,Oil,88,244,Overstock-Understock Gap
+Chennai,Delhi,Toothpaste,180,133,Overstock-Understock Gap
