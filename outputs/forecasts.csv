@@ -1,51 +1,51 @@
 SKU,Zone,Predicted_Week,Forecast_Quantity
-Biscuits,Chennai,2024-06-17,296
-Biscuits,Delhi,2024-06-17,341
-Biscuits,Lucknow,2024-06-17,280
-Biscuits,Nagpur,2024-06-17,325
+Biscuits,Chennai,2024-06-17,259
+Biscuits,Delhi,2024-06-17,355
+Biscuits,Lucknow,2024-06-17,279
+Biscuits,Nagpur,2024-06-17,316
 Biscuits,Pune,2024-06-17,452
-Chips,Chennai,2024-06-17,409
-Chips,Delhi,2024-06-17,274
-Chips,Lucknow,2024-06-17,384
-Chips,Nagpur,2024-06-17,278
-Chips,Pune,2024-06-17,468
-Juice,Chennai,2024-06-17,392
-Juice,Delhi,2024-06-17,250
-Juice,Lucknow,2024-06-17,303
-Juice,Nagpur,2024-06-17,451
-Juice,Pune,2024-06-17,470
-Milk,Chennai,2024-06-17,302
+Chips,Chennai,2024-06-17,395
+Chips,Delhi,2024-06-17,275
+Chips,Lucknow,2024-06-17,358
+Chips,Nagpur,2024-06-17,276
+Chips,Pune,2024-06-17,476
+Juice,Chennai,2024-06-17,395
+Juice,Delhi,2024-06-17,251
+Juice,Lucknow,2024-06-17,321
+Juice,Nagpur,2024-06-17,418
+Juice,Pune,2024-06-17,479
+Milk,Chennai,2024-06-17,303
 Milk,Delhi,2024-06-17,354
 Milk,Lucknow,2024-06-17,280
-Milk,Nagpur,2024-06-17,377
-Milk,Pune,2024-06-17,212
+Milk,Nagpur,2024-06-17,378
+Milk,Pune,2024-06-17,244
 Oil,Chennai,2024-06-17,451
-Oil,Delhi,2024-06-17,283
-Oil,Lucknow,2024-06-17,236
-Oil,Nagpur,2024-06-17,311
+Oil,Delhi,2024-06-17,284
+Oil,Lucknow,2024-06-17,237
+Oil,Nagpur,2024-06-17,310
 Oil,Pune,2024-06-17,271
-Rice,Chennai,2024-06-17,206
+Rice,Chennai,2024-06-17,208
 Rice,Delhi,2024-06-17,478
-Rice,Lucknow,2024-06-17,391
-Rice,Nagpur,2024-06-17,293
-Rice,Pune,2024-06-17,365
-Shampoo,Chennai,2024-06-17,359
-Shampoo,Delhi,2024-06-17,482
-Shampoo,Lucknow,2024-06-17,300
-Shampoo,Nagpur,2024-06-17,263
-Shampoo,Pune,2024-06-17,241
-Soap,Chennai,2024-06-17,188
-Soap,Delhi,2024-06-17,225
-Soap,Lucknow,2024-06-17,338
+Rice,Lucknow,2024-06-17,394
+Rice,Nagpur,2024-06-17,301
+Rice,Pune,2024-06-17,345
+Shampoo,Chennai,2024-06-17,354
+Shampoo,Delhi,2024-06-17,508
+Shampoo,Lucknow,2024-06-17,292
+Shampoo,Nagpur,2024-06-17,260
+Shampoo,Pune,2024-06-17,249
+Soap,Chennai,2024-06-17,196
+Soap,Delhi,2024-06-17,224
+Soap,Lucknow,2024-06-17,340
 Soap,Nagpur,2024-06-17,290
-Soap,Pune,2024-06-17,404
-Toothpaste,Chennai,2024-06-17,495
-Toothpaste,Delhi,2024-06-17,348
-Toothpaste,Lucknow,2024-06-17,443
+Soap,Pune,2024-06-17,395
+Toothpaste,Chennai,2024-06-17,498
+Toothpaste,Delhi,2024-06-17,349
+Toothpaste,Lucknow,2024-06-17,445
 Toothpaste,Nagpur,2024-06-17,270
-Toothpaste,Pune,2024-06-17,326
-Water Bottle,Chennai,2024-06-17,472
-Water Bottle,Delhi,2024-06-17,331
-Water Bottle,Lucknow,2024-06-17,318
-Water Bottle,Nagpur,2024-06-17,393
-Water Bottle,Pune,2024-06-17,254
+Toothpaste,Pune,2024-06-17,300
+Water Bottle,Chennai,2024-06-17,458
+Water Bottle,Delhi,2024-06-17,338
+Water Bottle,Lucknow,2024-06-17,297
+Water Bottle,Nagpur,2024-06-17,419
+Water Bottle,Pune,2024-06-17,253

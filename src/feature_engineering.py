@@ -1,72 +1,51 @@
+from src.external.weather import fetch_weather_data
+from src.external.trends import fetch_google_trends
+from src.external.holidays import fetch_holidays
+from datetime import datetime
 import pandas as pd
 
-def generate_features(data):
-    sales_df = data['sales'].copy()
-    trends_df = data['trends'].copy()
-    holidays_df = data['holidays'].copy()
-
-    # ✅ Detect and standardize the date column in sales
-    for col in ['date', 'Date', 'Week', 'Timestamp']:
-        if col in sales_df.columns:
-            sales_df.rename(columns={col: 'Date'}, inplace=True)
-            break
-    else:
-        raise ValueError("No valid date column found in sales data.")
-
+def generate_features(sales_df):
+    sales_df = sales_df.copy()
     sales_df['Date'] = pd.to_datetime(sales_df['Date'])
     sales_df['Week'] = sales_df['Date'].dt.to_period('W').apply(lambda r: r.start_time)
 
-    # ✅ Detect quantity column
-    for col in ['quantity_sold', 'Quantity_Sold', 'Qty', 'Sales']:
-        if col in sales_df.columns:
-            quantity_col = col
-            break
-    else:
-        raise ValueError("No valid quantity column found in sales data.")
+    # Aggregate weekly sales
+    weekly_sales = sales_df.groupby(['SKU', 'Zone', 'Week'])['Quantity_Sold'].sum().reset_index()
 
-    weekly_sales = sales_df.groupby(['SKU', 'Zone', 'Week'])[quantity_col].sum().reset_index()
-    weekly_sales.rename(columns={quantity_col: 'Quantity_Sold'}, inplace=True)
+    # 🔁 Google Trends
+    keywords = sales_df['SKU'].unique().tolist()
+    trends_df = fetch_google_trends(keywords)
 
-    # ✅ Process Google Trends
-    trends_df.rename(columns={'date': 'Date'}, inplace=True)
-    trends_df['Date'] = pd.to_datetime(trends_df['Date'])
-    trends_df['Week'] = trends_df['Date'].dt.to_period('W').apply(lambda r: r.start_time)
+    # 📅 Holidays
+    year = datetime.now().year
+    holidays_df = fetch_holidays(year)
 
-    # 🔍 Detect trend score column
-    for col in ['trend_score', 'Trend_Score', 'score', 'trendscore']:
-        if col in trends_df.columns:
-            trends_df.rename(columns={col: 'Trend_Score'}, inplace=True)
-            break
-    else:
-        raise ValueError("No valid trend score column found in trends data.")
+    # 🌤 Weather for each zone
+    WEATHER_API_KEY = "51c7714767dc30514f7c07ca28db716a"  # Replace with your key
+    zones = weekly_sales['Zone'].unique().tolist()
+    weather_data = pd.concat([fetch_weather_data(zone, WEATHER_API_KEY) for zone in zones], ignore_index=True)
 
-    weekly_trends = trends_df.groupby(['SKU', 'Zone', 'Week'])['Trend_Score'].mean().reset_index()
+    # 🔁 Merge Trends
+    trends_df = trends_df.melt(id_vars='Week', var_name='SKU', value_name='Trend_Score')
+    merged = pd.merge(weekly_sales, trends_df, on=['SKU', 'Week'], how='left')
 
-    # ✅ Process Holidays
-    holidays_df.rename(columns={'date': 'Date'}, inplace=True)
-    holidays_df['Date'] = pd.to_datetime(holidays_df['Date'])
-    holidays_df['Week'] = holidays_df['Date'].dt.to_period('W').apply(lambda r: r.start_time)
+    # 📅 Merge Holidays
     holidays_df['Is_Holiday'] = 1
+    holidays_df['Week'] = pd.to_datetime(holidays_df['Week'])
     holiday_flags = holidays_df.groupby(['Zone', 'Week'])['Is_Holiday'].max().reset_index()
+    merged = pd.merge(merged, holiday_flags, on=['Zone', 'Week'], how='left')
+    merged['Is_Holiday'] = merged['Is_Holiday'].fillna(0).astype(int)
 
-    # 🔗 Merge all datasets
-    df = pd.merge(weekly_sales, weekly_trends, on=['SKU', 'Zone', 'Week'], how='left')
-    df = pd.merge(df, holiday_flags, on=['Zone', 'Week'], how='left')
+    # 🌤 Merge Weather
+    merged = pd.merge(merged, weather_data[['Zone', 'Week', 'Temperature', 'Humidity']], 
+                      on=['Zone', 'Week'], how='left')
+    merged[['Temperature', 'Humidity']] = merged[['Temperature', 'Humidity']].fillna(method='ffill')
 
-    # 🧼 Fill missing values
-    df['Trend_Score'] = df['Trend_Score'].fillna(0)
-    df['Is_Holiday'] = df['Is_Holiday'].fillna(0).astype(int)
+    # 🧠 Time & Encoding
+    merged['Week_Number'] = merged['Week'].dt.isocalendar().week
+    merged['Month'] = merged['Week'].dt.month
+    merged['SKU_Encoded'] = merged['SKU'].astype('category').cat.codes
+    merged['Zone_Encoded'] = merged['Zone'].astype('category').cat.codes
+    merged['On_Promo'] = 0
 
-    # 🗓️ Time-based features
-    df['Week_Number'] = df['Week'].dt.isocalendar().week
-    df['Month'] = df['Week'].dt.month
-    df['Is_Weekend'] = df['Week'].dt.weekday >= 5
-
-    # 🔢 Categorical encodings
-    df['SKU_Encoded'] = df['SKU'].astype('category').cat.codes
-    df['Zone_Encoded'] = df['Zone'].astype('category').cat.codes
-
-    # 🏷️ Promo flag
-    df['On_Promo'] = 0
-
-    return df
+    return merged

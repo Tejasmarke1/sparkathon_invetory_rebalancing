@@ -24,23 +24,32 @@ def train_model(features_df):
 
         if len(group) < 5:
             continue
-        
-        
-        print(f"Processing {sku}-{zone} | Records: {len(group)}")
-        
 
+        print(f"Processing {sku}-{zone} | Records: {len(group)}")
+
+        # Encode zone if needed
         le_zone = LabelEncoder()
         group['Zone_Encoded'] = le_zone.fit_transform(group['Zone'])
 
-        numerical_cols = ['Trend_Score', 'Is_Holiday', 'Week_Number', 'On_Promo', 'lag_1', 'lag_2', 'lag_3', 'rolling_avg_3']
+        # ✨ Updated numerical features including external data
+        numerical_cols = [
+            'Trend_Score', 'Is_Holiday', 'Temperature', 'Humidity',
+            'Week_Number', 'On_Promo', 'lag_1', 'lag_2', 'lag_3', 'rolling_avg_3'
+        ]
+
         X = group[numerical_cols]
         y = group['Quantity_Sold']
 
+        # Normalize
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
 
+        # Time-based split
         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, shuffle=False)
+        
+        
 
+        # Model
         xgb = XGBRegressor(objective='reg:squarederror', random_state=42)
         param_grid = {
             'n_estimators': [50, 100],
@@ -52,10 +61,12 @@ def train_model(features_df):
 
         model = grid.best_estimator_
 
+        # Evaluate
         y_pred = model.predict(X_test)
         test_mae = mean_absolute_error(y_test, y_pred)
         print(f"[{sku}-{zone}] MAE on test set: {test_mae:.2f}")
 
+        # Forecast next week
         last_row = X.iloc[[-1]]
         X_future = scaler.transform(last_row)
         forecast = model.predict(X_future)[0]
@@ -68,8 +79,6 @@ def train_model(features_df):
         })
 
     return pd.DataFrame(predictions, columns=["SKU", "Zone", "Predicted_Week", "Forecast_Quantity"])
-
-
 
 
 def evaluate_model(features_df, forecast_df):
