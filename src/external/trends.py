@@ -2,7 +2,7 @@ from pytrends.request import TrendReq
 import pandas as pd
 from datetime import datetime
 import re
-
+import time
 def fetch_google_trends(keywords, geo='IN'):
     pytrends = TrendReq(hl='en-US', tz=330)
 
@@ -20,6 +20,7 @@ def fetch_google_trends(keywords, geo='IN'):
             df.reset_index(inplace=True)
             df['Week'] = df['date'].dt.to_period('W').apply(lambda r: r.start_time)
             all_trends.append(df[['Week'] + chunk])
+            time.sleep(5)
         except Exception as e:
             print(f"⚠️ Skipping keywords {chunk} due to error: {e}")
 

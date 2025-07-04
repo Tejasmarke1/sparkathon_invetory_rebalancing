@@ -1,6 +1,6 @@
 import pandas as pd
 from xgboost import XGBRegressor
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
@@ -18,20 +18,22 @@ def train_model(features_df):
 
     last_week = features_df['Week'].max()
     next_week = last_week + pd.Timedelta(weeks=1)
+    
+    inventory_df = pd.read_csv('data/inventory.csv')
+    print(inventory_df.head())
 
     for (sku, zone), group in features_df.groupby(['SKU', 'Zone']):
         group = group.sort_values('Week')
 
         if len(group) < 5:
+            print(f"[{sku}-{zone}] Skipped due to insufficient records")
             continue
 
         print(f"Processing {sku}-{zone} | Records: {len(group)}")
 
-        # Encode zone if needed
         le_zone = LabelEncoder()
         group['Zone_Encoded'] = le_zone.fit_transform(group['Zone'])
 
-        # ✨ Updated numerical features including external data
         numerical_cols = [
             'Trend_Score', 'Is_Holiday', 'Temperature', 'Humidity',
             'Week_Number', 'On_Promo', 'lag_1', 'lag_2', 'lag_3', 'rolling_avg_3'
@@ -40,45 +42,65 @@ def train_model(features_df):
         X = group[numerical_cols]
         y = group['Quantity_Sold']
 
-        # Normalize
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
 
-        # Time-based split
-        X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, shuffle=False)
-        
-        
+        split_idx = int(len(X) * 0.8)
+        X_train, X_test = X[:split_idx], X[split_idx:]
+        y_train, y_test = y[:split_idx], y[split_idx:]
 
-        # Model
-        xgb = XGBRegressor(objective='reg:squarederror', random_state=42)
-        param_grid = {
-            'n_estimators': [50, 100],
-            'max_depth': [3, 5],
-            'learning_rate': [0.05, 0.1]
-        }
-        grid = GridSearchCV(xgb, param_grid, scoring='neg_mean_absolute_error', cv=3)
-        grid.fit(X_train, y_train)
+        if len(X_train) < 5 or len(X_test) < 1:
+            print(f"[{sku}-{zone}] Skipped due to too small train/test split")
+            continue
 
-        model = grid.best_estimator_
+        # ✅ Using early stopping properly
+        model = XGBRegressor(
+            objective='reg:squarederror',
+            random_state=42,
+            n_estimators=100,
+            max_depth=3,
+            learning_rate=0.05,
+            reg_alpha=1.0,
+            reg_lambda=1.0
+        )
 
-        # Evaluate
+        model.fit(
+            X_train,
+            y_train,
+            eval_set=[(X_test, y_test)],
+            verbose=False
+        )
+
         y_pred = model.predict(X_test)
         test_mae = mean_absolute_error(y_test, y_pred)
         print(f"[{sku}-{zone}] MAE on test set: {test_mae:.2f}")
+        print("▶ Sample Predicted:", y_pred[:3])
+        print("▶ Sample Actual   :", y_test.values[:3])
 
         # Forecast next week
-        last_row = X.iloc[[-1]]
-        X_future = scaler.transform(last_row)
+        last_train_input = X.iloc[len(X_train) - 1 : len(X_train)]
+        X_future = scaler.transform(last_train_input)
         forecast = model.predict(X_future)[0]
+        
+        stock_row = inventory_df[
+        (inventory_df['SKU'] == sku) & (inventory_df['Zone'] == zone)
+        ]
+        
+        current_stock = int(stock_row['Current_Stock'].values[0]) if not stock_row.empty else 0
+        
 
         predictions.append({
             'SKU': sku,
             'Zone': zone,
+            # Use next_week for prediction
             'Predicted_Week': next_week.date(),
-            'Forecast_Quantity': round(forecast)
+            'Forecast_Quantity': round(forecast),
+            'Current_Stock': current_stock
         })
 
-    return pd.DataFrame(predictions, columns=["SKU", "Zone", "Predicted_Week", "Forecast_Quantity"])
+    return pd.DataFrame(predictions, columns=["SKU", "Zone", "Predicted_Week", "Forecast_Quantity","Current_Stock"])
+
+
 
 
 def evaluate_model(features_df, forecast_df):
@@ -95,10 +117,11 @@ def evaluate_model(features_df, forecast_df):
         )
 
         if merged.empty:
-            print("⚠️ No overlap between forecast and historical data. Skipping evaluation.")
+            print("⚠️ No overlap between forecast and actual data. Evaluation skipped.")
             return None
 
         mae = mean_absolute_error(merged['Quantity_Sold'], merged['Forecast_Quantity'])
+        print(f"✅ Evaluation MAE: {mae:.2f}")
         return mae
 
     except Exception as e:

@@ -1,45 +1,64 @@
-import streamlit as st
+# dashboard/app.py
+
+from fastapi import FastAPI
+from fastapi import HTTPException   
+from src.data_loader import load_all_data
+from src.feature_engineering import generate_features
+from src.model import train_model, evaluate_model
+from src.rebalancer import generate_transfer_plan
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
-import plotly.express as px
 
-# Load data
-forecast_df = pd.read_csv('outputs/forecasts.csv')
-inventory_df = pd.read_csv('data/inventory.csv')
-transfer_df = pd.read_json('outputs/transfer_plan.json')
+app = FastAPI()
 
-# Merge forecast + inventory
-merged_df = pd.merge(forecast_df, inventory_df, on=['SKU', 'Zone'])
+app = FastAPI()
 
-# -----------------------------
-st.title("📦 AI-Based Inventory Rebalancing Dashboard")
+# Allow frontend to call this backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For dev only. Use your frontend domain in prod.
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Sidebar filters
-sku_list = merged_df['SKU'].unique()
-zone_list = merged_df['Zone'].unique()
+@app.get("/")
+def root():
+    return {"message": "Inventory Rebalancing API is live!"}
 
-selected_sku = st.sidebar.selectbox("Select SKU", sku_list)
-selected_zone = st.sidebar.selectbox("Select Zone", zone_list)
 
-# Filtered data
-filtered = merged_df[
-    (merged_df['SKU'] == selected_sku) & 
-    (merged_df['Zone'] == selected_zone)
-]
+@app.get("/forecast")
+def forecast():
+    data = load_all_data()
+    features_df = generate_features(data['sales'])
+    forecast_df = train_model(features_df)
+    forecast_df.to_csv("outputs/forecasts.csv", index=False)
+    return forecast_df.to_dict(orient='records')
 
-st.subheader(f"🔍 Forecast for {selected_sku} in {selected_zone}")
-st.write(filtered)
 
-# Inventory Bar Chart
-st.subheader("📊 Inventory Health by Zone")
-inv_chart = merged_df[merged_df['SKU'] == selected_sku].copy()
-inv_chart['Gap'] = inv_chart['Current_Stock'] - inv_chart['Forecast_Quantity']
-fig = px.bar(inv_chart, x='Zone', y='Gap', color='Gap', color_continuous_scale='RdYlGn')
-st.plotly_chart(fig, use_container_width=True)
+@app.get("/transfer-plan")
+def get_transfer_plan():
+    try:
+        print("🔄 Reading forecast...")
+        forecast_df = pd.read_csv('outputs/forecasts.csv')
+        print(forecast_df.head())
 
-# Transfer Plan
-st.subheader("♻️ Suggested Transfers")
-st.dataframe(transfer_df)
+        print("📦 Reading inventory...")
+        inventory_df = pd.read_csv('data/inventory.csv')
+        print(inventory_df.head())
 
-# Optional map display if you have zones.csv with lat-long
-# zones_df = pd.read_csv("data/zones.csv")
-# st.map(zones_df.rename(columns={"Latitude": "lat", "Longitude": "lon"}))
+        print("💰 Reading cost matrix...")
+        cost_df = pd.read_csv('data/cost_matrix.csv')
+        print(cost_df.head())
+
+        suggestions = generate_transfer_plan(forecast_df, inventory_df, cost_df)
+
+        if not suggestions:
+            return {"message": "No transfer suggestions generated."}
+
+        return suggestions
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error generating transfer plan: {str(e)}")
+
